@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Record Management using Hashing</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f5f6f8;
+            color: #222222;
+            font-family: "Segoe UI", Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dddddd;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #2b6cb0;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #555555;
+        }
+
+        .layout-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .layout-container {
+                flex-direction: column;
+            }
+        }
+
+        .panel {
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+            padding: 16px;
+            flex: 1;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2b6cb0;
+            margin-bottom: 14px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #eeeeee;
+        }
+
+        .section-box {
+            margin-bottom: 20px;
+        }
+
+        .section-box:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333333;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: #444444;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 6px 10px;
+            font-size: 14px;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+            background-color: #ffffff;
+            color: #222222;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #2b6cb0;
+        }
+
+        .inline-form {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .inline-form input {
+            flex: 1;
+        }
+
+        button {
+            background-color: #2b6cb0;
+            color: #ffffff;
+            border: 1px solid #2b6cb0;
+            border-radius: 4px;
+            padding: 6px 14px;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background-color: #2c5282;
+            border-color: #2c5282;
+        }
+
+        .btn-full {
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .error-message {
+            color: #c53030;
+            font-size: 13px;
+            margin-top: 6px;
+            min-height: 18px;
+        }
+
+        .result-message {
+            color: #2b6cb0;
+            font-size: 13px;
+            margin-top: 6px;
+            min-height: 18px;
+            font-weight: 500;
+        }
+
+        .bucket-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .bucket-row {
+            padding: 8px 12px;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+            background-color: #ffffff;
+            font-family: monospace;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .bucket-row.highlight-bucket {
+            background-color: #ebf8ff;
+            border-color: #2b6cb0;
+        }
+
+        .bucket-index {
+            font-weight: bold;
+            color: #2b6cb0;
+            width: 30px;
+        }
+
+        .bucket-content {
+            color: #222222;
+        }
+
+        .empty-text {
+            color: #888888;
+            font-style: italic;
+        }
+
+        .table-panel {
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+            padding: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f5f6f8;
+            color: #2b6cb0;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="appTitle">Student Record Management using Hashing</h1>
+        <div class="subtitle" id="appSubtitle">Bucket = roll number % 7. Collisions are handled by chaining.</div>
+    </header>
+
+    <div class="layout-container">
+        <!-- Left Panel: Operations Form -->
+        <div class="panel">
+            <div class="panel-title">Student Operations</div>
+
+            <!-- Form: Add or Update Student -->
+            <div class="section-box">
+                <div class="section-title">Add / Update Student</div>
+                <div class="form-group">
+                    <label for="rollInput">Roll Number</label>
+                    <input type="number" id="rollInput" placeholder="e.g. 101" min="1">
+                </div>
+                <div class="form-group">
+                    <label for="nameInput">Name</label>
+                    <input type="text" id="nameInput" placeholder="e.g. Asha">
+                </div>
+                <div class="form-group">
+                    <label for="branchInput">Branch</label>
+                    <input type="text" id="branchInput" placeholder="e.g. CSE">
+                </div>
+                <div class="form-group">
+                    <label for="cgpaInput">CGPA</label>
+                    <input type="number" id="cgpaInput" placeholder="e.g. 8.7" step="0.01" min="0" max="10">
+                </div>
+                <button id="addBtn" class="btn-full">Add / Update Student</button>
+                <div id="formError" class="error-message"></div>
+            </div>
+
+            <!-- Form: Search Student -->
+            <div class="section-box">
+                <div class="section-title">Search by Roll No</div>
+                <div class="inline-form">
+                    <input type="number" id="searchRollInput" placeholder="Enter Roll No" min="1">
+                    <button id="searchBtn">Search</button>
+                </div>
+                <div id="searchResult" class="result-message"></div>
+            </div>
+
+            <!-- Form: Delete Student -->
+            <div class="section-box">
+                <div class="section-title">Delete by Roll No</div>
+                <div class="inline-form">
+                    <input type="number" id="deleteRollInput" placeholder="Enter Roll No" min="1">
+                    <button id="deleteBtn">Delete</button>
+                </div>
+                <div id="deleteResult" class="result-message"></div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Hash Table Visualizer -->
+        <div class="panel">
+            <div class="panel-title">Hash table (7 buckets)</div>
+            <div id="bucketContainer" class="bucket-list"></div>
+        </div>
+    </div>
+
+    <!-- Bottom Panel: Full Table of Students -->
+    <div class="table-panel">
+        <div class="panel-title">All Student Records</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Roll</th>
+                    <th>Name</th>
+                    <th>Branch</th>
+                    <th>CGPA</th>
+                    <th>Bucket</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Track the index of the most recently accessed bucket for visual highlight
+        let lastAccessedBucket = -1;
+
+        // Fetch initial hash table data when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchTableData();
+            setupEventListeners();
+        });
+
+        // Set up event handlers for buttons
+        function setupEventListeners() {
+            document.getElementById('addBtn').addEventListener('click', handleAddStudent);
+            document.getElementById('searchBtn').addEventListener('click', handleSearchStudent);
+            document.getElementById('deleteBtn').addEventListener('click', handleDeleteStudent);
+        }
+
+        // Clears all message output fields
+        function clearMessages() {
+            document.getElementById('formError').textContent = '';
+            document.getElementById('searchResult').textContent = '';
+            document.getElementById('deleteResult').textContent = '';
+        }
+
+        // Fetches complete table JSON from server and updates UI
+        function fetchTableData() {
+            fetch('/api/table')
+                .then(response => response.json())
+                .then(data => {
+                    renderBuckets(data.buckets, lastAccessedBucket);
+                    renderStudentTable(data.buckets);
+                })
+                .catch(err => {
+                    document.getElementById('formError').textContent = 'Failed to connect to server';
+                });
+        }
+
+        // Handles Add / Update Student form submission
+        function handleAddStudent() {
+            clearMessages();
+
+            const roll = document.getElementById('rollInput').value.trim();
+            const name = document.getElementById('nameInput').value.trim();
+            const branch = document.getElementById('branchInput').value.trim();
+            const cgpa = document.getElementById('cgpaInput').value.trim();
+
+            if (!roll || parseInt(roll) <= 0) {
+                document.getElementById('formError').textContent = 'Roll number must be a positive integer';
+                return;
+            }
+            if (!name) {
+                document.getElementById('formError').textContent = 'Name cannot be empty';
+                return;
+            }
+            if (!branch) {
+                document.getElementById('formError').textContent = 'Branch cannot be empty';
+                return;
+            }
+            if (!cgpa || isNaN(cgpa) || parseFloat(cgpa) < 0 || parseFloat(cgpa) > 10) {
+                document.getElementById('formError').textContent = 'CGPA must be a number between 0 and 10';
+                return;
+            }
+
+            const url = '/api/add?roll=' + encodeURIComponent(roll) +
+                        '&name=' + encodeURIComponent(name) +
+                        '&branch=' + encodeURIComponent(branch) +
+                        '&cgpa=' + encodeURIComponent(cgpa);
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('formError').textContent = data.error;
+                    } else {
+                        lastAccessedBucket = parseInt(roll) % 7;
+                        renderBuckets(data.buckets, lastAccessedBucket);
+                        renderStudentTable(data.buckets);
+                        // Clear form inputs on success
+                        document.getElementById('rollInput').value = '';
+                        document.getElementById('nameInput').value = '';
+                        document.getElementById('branchInput').value = '';
+                        document.getElementById('cgpaInput').value = '';
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('formError').textContent = 'Failed to save student record';
+                });
+        }
+
+        // Handles Search Student action
+        function handleSearchStudent() {
+            clearMessages();
+
+            const roll = document.getElementById('searchRollInput').value.trim();
+            if (!roll || parseInt(roll) <= 0) {
+                document.getElementById('searchResult').textContent = 'Roll number must be a positive integer';
+                document.getElementById('searchResult').style.color = '#c53030';
+                return;
+            }
+
+            fetch('/api/get?roll=' + encodeURIComponent(roll))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('searchResult').textContent = data.error;
+                        document.getElementById('searchResult').style.color = '#c53030';
+                    } else {
+                        lastAccessedBucket = data.bucket;
+                        if (data.found) {
+                            document.getElementById('searchResult').style.color = '#2b6cb0';
+                            document.getElementById('searchResult').textContent = 
+                                'Found in bucket ' + data.bucket + ' after checking ' + data.steps + ' node' + (data.steps === 1 ? '' : 's');
+                        } else {
+                            document.getElementById('searchResult').style.color = '#c53030';
+                            document.getElementById('searchResult').textContent = 
+                                'Not found in bucket ' + data.bucket + ' after checking ' + data.steps + ' node' + (data.steps === 1 ? '' : 's');
+                        }
+                        // Refresh buckets to update highlight
+                        fetchTableData();
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('searchResult').textContent = 'Failed to execute search';
+                    document.getElementById('searchResult').style.color = '#c53030';
+                });
+        }
+
+        // Handles Delete Student action
+        function handleDeleteStudent() {
+            clearMessages();
+
+            const roll = document.getElementById('deleteRollInput').value.trim();
+            if (!roll || parseInt(roll) <= 0) {
+                document.getElementById('deleteResult').textContent = 'Roll number must be a positive integer';
+                document.getElementById('deleteResult').style.color = '#c53030';
+                return;
+            }
+
+            fetch('/api/delete?roll=' + encodeURIComponent(roll))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('deleteResult').textContent = data.error;
+                        document.getElementById('deleteResult').style.color = '#c53030';
+                    } else {
+                        lastAccessedBucket = parseInt(roll) % 7;
+                        document.getElementById('deleteResult').style.color = '#2b6cb0';
+                        document.getElementById('deleteResult').textContent = 'Delete operation completed for roll ' + roll;
+                        renderBuckets(data.buckets, lastAccessedBucket);
+                        renderStudentTable(data.buckets);
+                        document.getElementById('deleteRollInput').value = '';
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('deleteResult').textContent = 'Failed to delete student record';
+                    document.getElementById('deleteResult').style.color = '#c53030';
+                });
+        }
+
+        // Renders hash table bucket rows cleanly using textContent
+        function renderBuckets(buckets, activeBucket) {
+            const container = document.getElementById('bucketContainer');
+            container.textContent = ''; // Clear container
+
+            for (let i = 0; i < buckets.length; i++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'bucket-row';
+                if (i === activeBucket) {
+                    rowDiv.classList.add('highlight-bucket');
+                }
+
+                const indexSpan = document.createElement('span');
+                indexSpan.className = 'bucket-index';
+                indexSpan.textContent = i + ' | ';
+                rowDiv.appendChild(indexSpan);
+
+                const contentSpan = document.createElement('span');
+                contentSpan.className = 'bucket-content';
+
+                const chain = buckets[i];
+                if (!chain || chain.length === 0) {
+                    contentSpan.textContent = 'empty';
+                    contentSpan.classList.add('empty-text');
+                } else {
+                    const rolls = chain.map(student => student.roll).join(' -> ');
+                    contentSpan.textContent = rolls;
+                }
+
+                rowDiv.appendChild(contentSpan);
+                container.appendChild(rowDiv);
+            }
+        }
+
+        // Renders all student records in bottom plain table
+        function renderStudentTable(buckets) {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.textContent = ''; // Clear table body
+
+            let totalCount = 0;
+            for (let i = 0; i < buckets.length; i++) {
+                const chain = buckets[i];
+                for (let j = 0; j < chain.length; j++) {
+                    totalCount++;
+                    const student = chain[j];
+
+                    const tr = document.createElement('tr');
+
+                    const tdRoll = document.createElement('td');
+                    tdRoll.textContent = student.roll;
+                    tr.appendChild(tdRoll);
+
+                    const tdName = document.createElement('td');
+                    tdName.textContent = student.name;
+                    tr.appendChild(tdName);
+
+                    const tdBranch = document.createElement('td');
+                    tdBranch.textContent = student.branch;
+                    tr.appendChild(tdBranch);
+
+                    const tdCgpa = document.createElement('td');
+                    tdCgpa.textContent = student.cgpa;
+                    tr.appendChild(tdCgpa);
+
+                    const tdBucket = document.createElement('td');
+                    tdBucket.textContent = i;
+                    tr.appendChild(tdBucket);
+
+                    tbody.appendChild(tr);
+                }
+            }
+
+            if (totalCount === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.setAttribute('colspan', '5');
+                td.style.textAlign = 'center';
+                td.style.color = '#888888';
+                td.textContent = 'No records in hash table';
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+            }
+        }
+    </script>
+</body>
+</html>
